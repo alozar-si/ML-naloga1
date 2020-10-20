@@ -26,17 +26,13 @@ def load_data(dataset, datadir):
     
     return dataset, store
 
-for label, dataset in zip(labels, datasets):
-    # Load dataset
-    ds,file=load_data(dataset, datadir_input)
-    
+def createHistogram(ds, n_bins, x_range):
     # Get simulated (Background, Signal) or measured (Data) data
     all_events=ds["Muons_Minv_MuMu_Paper"]
-    
     # Get correct weights
     wts=ds["CombWeight"]
     wts2=wts*wts
-    
+
     # Firstly, get correct number of bin_values
     bin_values, _ = np.histogram(all_events,bins=n_bins,range=x_range,weights=wts) # wts!
     
@@ -44,6 +40,14 @@ for label, dataset in zip(labels, datasets):
     y, bin_edges = np.histogram(all_events,bins=n_bins,range=x_range,weights=wts2) # wts2!
     bin_centers = 0.5*(bin_edges[1:] + bin_edges[:-1])
     bin_errors = np.sqrt(y)
+
+    return [bin_edges, bin_centers, bin_values, bin_errors]
+
+for label, dataset in zip(labels, datasets):
+    # Load dataset
+    ds,file=load_data(dataset, datadir_input)
+    
+    [bin_edges, bin_centers, bin_values, bin_errors] = createHistogram(ds, n_bins, x_range)
 
     # Finally, save several arrays into a single file in uncompressed .npz format
     save_name = datadir_output + 'hist_range_'+str(x_range[0]) + '-' + str(x_range[1]) + '_nbin-' + str(n_bins)+'_'+label+'.npz'
